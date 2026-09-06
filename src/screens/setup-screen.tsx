@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Profile } from "../types/profile";
-import type { AppRuleInput, Category, DomainRuleInput, RunningProcess } from "../types/tracker";
+import type { AppRule, AppRuleInput, Category, DomainRule, DomainRuleInput, RunningProcess } from "../types/tracker";
 
 const CATEGORIES: Category[] = ["work", "entertainment", "distraction", "unclassified"];
 
@@ -13,6 +13,7 @@ export function SetupScreen({ onSessionStarted }: Props) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileId, setProfileId] = useState<number | null>(null);
   const [newProfileName, setNewProfileName] = useState("");
+  const [editedName, setEditedName] = useState("");
   const [processes, setProcesses] = useState<RunningProcess[]>([]);
   const [rules, setRules] = useState<Record<string, Category>>({});
   const [domainRules, setDomainRules] = useState<DomainRuleInput[]>([]);
@@ -30,6 +31,46 @@ export function SetupScreen({ onSessionStarted }: Props) {
   };
 
   useEffect(loadProfiles, []);
+
+  // Load the selected profile's existing rules so switching profiles shows
+  // (and Start Session doesn't silently wipe) what's already configured.
+  useEffect(() => {
+    if (profileId === null) return;
+    const current = profiles.find((p) => p.id === profileId);
+    setEditedName(current?.name ?? "");
+
+    invoke<AppRule[]>("get_app_rules", { profileId })
+      .then((list) => setRules(Object.fromEntries(list.map((r) => [r.process_name, r.category]))))
+      .catch((err) => setError(String(err)));
+
+    invoke<DomainRule[]>("get_domain_rules", { profileId })
+      .then((list) => setDomainRules(list.map((r) => ({ domain: r.domain, category: r.category }))))
+      .catch((err) => setError(String(err)));
+  }, [profileId, profiles]);
+
+  const renameProfile = async () => {
+    if (profileId === null || !editedName.trim()) return;
+    try {
+      await invoke("rename_profile", { profileId, name: editedName.trim() });
+      setProfiles((prev) => prev.map((p) => (p.id === profileId ? { ...p, name: editedName.trim() } : p)));
+    } catch (err) {
+      setError(String(err));
+    }
+  };
+
+  const deleteProfile = async () => {
+    if (profileId === null) return;
+    try {
+      await invoke("delete_profile", { profileId });
+      const remaining = profiles.filter((p) => p.id !== profileId);
+      setProfiles(remaining);
+      setProfileId(remaining.length > 0 ? remaining[0].id : null);
+      setRules({});
+      setDomainRules([]);
+    } catch (err) {
+      setError(String(err));
+    }
+  };
 
   const createProfile = async () => {
     if (!newProfileName.trim()) return;
@@ -65,6 +106,14 @@ export function SetupScreen({ onSessionStarted }: Props) {
 
   const removeDomainRule = (domain: string) => {
     setDomainRules((prev) => prev.filter((r) => r.domain !== domain));
+  };
+
+  const removeAppRule = (processName: string) => {
+    setRules((prev) => {
+      const next = { ...prev };
+      delete next[processName];
+      return next;
+    });
   };
 
   const startSession = async () => {
@@ -111,6 +160,50 @@ export function SetupScreen({ onSessionStarted }: Props) {
             Create
           </button>
         </div>
+        {profileId !== null && (
+          <div className="flex gap-2">
+            <input
+              className="bg-slate-800 rounded px-3 py-2 flex-1"
+              placeholder="Rename selected profile"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+            />
+            <button className="bg-slate-700 rounded px-3 py-2" onClick={renameProfile}>
+              Save name
+            </button>
+            <button className="bg-red-700 rounded px-3 py-2" onClick={deleteProfile}>
+              Delete profile
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <label className="text-sm text-slate-400">Configured app rules</label>
+        <ul className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+          {Object.entries(rules).map(([processName, category]) => (
+            <li key={processName} className="flex items-center justify-between bg-slate-900 rounded px-3 py-2">
+              <span>{processName}</span>
+              <div className="flex items-center gap-2">
+                <select
+                  className="bg-slate-800 rounded px-2 py-1"
+                  value={category}
+                  onChange={(e) => setCategory(processName, e.target.value as Category)}
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <button className="text-red-400" onClick={() => removeAppRule(processName)}>
+                  Remove
+                </button>
+              </div>
+            </li>
+          ))}
+          {Object.keys(rules).length === 0 && <li className="text-slate-500 text-sm">No app rules yet.</li>}
+        </ul>
       </section>
 
       <section className="flex flex-col gap-2">
