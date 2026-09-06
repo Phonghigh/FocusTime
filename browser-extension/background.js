@@ -24,12 +24,17 @@ function getPort() {
 
 function reportDomain(url) {
   if (!url) return;
-  let hostname;
+  let parsed;
   try {
-    hostname = new URL(url).hostname;
+    parsed = new URL(url);
   } catch {
-    return; // Not a real URL (e.g. chrome://, about:blank) — skip.
+    return; // Not a parseable URL — skip.
   }
+  // Only track real web pages. chrome://, edge://, about:, file:// etc. have
+  // a "hostname" too (e.g. chrome://extensions -> "extensions") but aren't
+  // domains worth classifying, so exclude them explicitly.
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
+  const hostname = parsed.hostname;
   if (!hostname) return;
 
   try {
