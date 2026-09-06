@@ -15,11 +15,25 @@ messaging host manually (one-time setup, per browser, per machine).
 4. Copy the generated extension ID shown on the card (looks like
    `abcdefghijklmnopabcdefghijklmnop`).
 
-## 2. Register the native messaging host
+## 2. Build the native host binary
+
+Chrome always launches the exact executable in the manifest's `"path"` with
+no way for us to pass it a custom flag — so the native host is a **separate,
+dedicated binary** (`focustime-native-host.exe`), not the main app
+(`focustime.exe`). Build it once from `src-tauri/`:
+
+```
+cargo build --release --bin focustime-native-host
+```
+
+This produces `src-tauri/target/release/focustime-native-host.exe`.
+
+## 3. Register the native messaging host
 
 1. Edit `native-host/com.focustime.native_host.json`:
-   - Set `"path"` to the absolute path of the built `focustime.exe`
-     (e.g. `D:\\project\\FocusTime\\src-tauri\\target\\release\\focustime.exe`).
+   - Set `"path"` to the absolute path of `focustime-native-host.exe` from
+     step 2 (e.g.
+     `D:\\project\\FocusTime\\src-tauri\\target\\release\\focustime-native-host.exe`).
    - Set `"allowed_origins"` to `"chrome-extension://<your-extension-id>/"`
      using the ID from step 1.
 2. Register the manifest in the registry (per-user, no admin rights needed).
@@ -35,7 +49,8 @@ messaging host manually (one-time setup, per browser, per machine).
    reg add "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.focustime.native_host" /ve /t REG_SZ /d "D:\project\FocusTime\browser-extension\native-host\com.focustime.native_host.json" /f
    ```
 
-3. Restart the browser so it picks up the new native messaging host.
+3. Restart the browser (or reload the extension in `chrome://extensions`)
+   so it picks up the new native messaging host.
 
 ### Firefox
 
@@ -69,12 +84,13 @@ rather than a generated Chrome-style ID:
    (no registry entry needed).
 4. Restart Firefox.
 
-## 3. Run FocusTime
+## 4. Run FocusTime
 
-Start the FocusTime desktop app normally (it listens on `127.0.0.1:47821`
-for domain updates). When the browser is the tracked foreground app and you
-switch tabs, Chrome spawns `focustime.exe --native-host` in the background,
-which forwards the active domain to the running app over that port.
+Start the FocusTime desktop app (`focustime.exe`, the GUI one) normally —
+it listens on `127.0.0.1:47821` for domain updates. When the browser is the
+tracked foreground app and you switch tabs, Chrome spawns
+`focustime-native-host.exe` in the background, which forwards the active
+domain to the running app over that port.
 
 **Note:** this manual registry + unpacked-extension setup has not been
 exercised end-to-end in the automated build environment (no interactive

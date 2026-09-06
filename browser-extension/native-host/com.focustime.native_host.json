@@ -1,7 +1,7 @@
 {
   "name": "com.focustime.native_host",
   "description": "FocusTime native messaging host — forwards active tab domain to the FocusTime desktop app.",
-  "path": "D:\\project\\FocusTime\\src-tauri\\target\\release\\focustime.exe",
+  "path": "D:\\project\\FocusTime\\src-tauri\\target\\release\\focustime-native-host.exe",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://dlaimcnjhiomagpfodaboefgickhmcnp/"
