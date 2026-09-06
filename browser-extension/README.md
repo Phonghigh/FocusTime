@@ -37,6 +37,38 @@ messaging host manually (one-time setup, per browser, per machine).
 
 3. Restart the browser so it picks up the new native messaging host.
 
+### Firefox
+
+**Caveat:** Firefox's MV3 `background.service_worker` support is limited/
+experimental compared to Chrome/Edge; if the temporary add-on fails to load
+the background script, switch `background` in `manifest.json` to
+`{"scripts": ["background.js"]}` for Firefox specifically (Chrome/Edge would
+need `service_worker` instead) — you may need two slightly different
+manifests if you want both browser families working at once.
+
+Firefox doesn't use the Windows registry for native messaging — it reads the
+manifest from a fixed per-user folder instead, and its `allowed_extensions`
+field (not `allowed_origins`) takes the extension's ID from `manifest.json`
+rather than a generated Chrome-style ID:
+
+1. Load the extension temporarily via `about:debugging#/runtime/this-firefox`
+   -> "Load Temporary Add-on" -> select `browser-extension/manifest.json`
+   (Firefox unloads temporary add-ons on restart; a signed/permanent install
+   isn't required for local testing).
+2. In `native-host/com.focustime.native_host.json`, use `allowed_extensions`
+   instead of `allowed_origins`, e.g.:
+   ```json
+   "allowed_extensions": ["focustime@example.com"]
+   ```
+   matching the `browser_specific_settings.gecko.id` you set in
+   `manifest.json` (add that key if not already present).
+3. Copy the manifest to:
+   ```
+   %APPDATA%\Mozilla\NativeMessagingHosts\com.focustime.native_host.json
+   ```
+   (no registry entry needed).
+4. Restart Firefox.
+
 ## 3. Run FocusTime
 
 Start the FocusTime desktop app normally (it listens on `127.0.0.1:47821`
