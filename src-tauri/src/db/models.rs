@@ -26,6 +26,23 @@ pub struct AppRuleInput {
     pub category: Category,
 }
 
+/// A single domain -> category rule belonging to a profile (used when the
+/// foreground app is a known browser).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DomainRule {
+    pub id: i64,
+    pub profile_id: i64,
+    pub domain: String,
+    pub category: Category,
+}
+
+/// Input shape for `set_domain_rules`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct DomainRuleInput {
+    pub domain: String,
+    pub category: Category,
+}
+
 /// A row of the `usage_events` table (one contiguous active-window span).
 #[derive(Debug, Clone, Serialize)]
 pub struct UsageEvent {

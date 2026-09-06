@@ -12,6 +12,18 @@ export interface AppRuleInput {
   category: Category;
 }
 
+export interface DomainRule {
+  id: number;
+  profile_id: number;
+  domain: string;
+  category: Category;
+}
+
+export interface DomainRuleInput {
+  domain: string;
+  category: Category;
+}
+
 export interface RunningProcess {
   pid: number;
   process_name: string;
@@ -26,6 +38,7 @@ export interface CategoryTotals {
 
 export interface LiveState {
   process_name: string;
+  domain: string | null;
   category: Category;
   elapsed_seconds: number;
   totals: CategoryTotals;

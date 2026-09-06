@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "FocusTime Domain Tracker",
+  "version": "1.0.0",
+  "description": "Reports the active tab's domain to the FocusTime desktop app for browser-aware time tracking.",
+  "permissions": ["tabs", "activeTab", "nativeMessaging"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

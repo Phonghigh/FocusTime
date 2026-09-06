@@ -1,5 +1,6 @@
 mod commands;
 mod db;
+pub mod native_host;
 mod tracker;
 
 use tauri::Manager;
@@ -13,6 +14,7 @@ pub fn run() {
             let db = db::init_db(app.handle())?;
             app.manage(db);
             app.manage(SessionEngine::default());
+            tracker::browser_bridge::start(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -21,6 +23,8 @@ pub fn run() {
             commands::processes::list_running_processes,
             commands::rules::set_app_rules,
             commands::rules::get_app_rules,
+            commands::domain_rules::set_domain_rules,
+            commands::domain_rules::get_domain_rules,
             commands::session::start_session,
             commands::session::stop_session,
             commands::session::get_session_report,

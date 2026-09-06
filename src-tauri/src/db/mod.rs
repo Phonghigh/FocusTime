@@ -9,7 +9,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
 pub use category::Category;
-pub use models::{AppRule, AppRuleInput, Profile, UsageEvent};
+pub use models::{AppRule, AppRuleInput, DomainRule, DomainRuleInput, Profile, UsageEvent};
 
 /// Shared, mutex-guarded SQLite connection stored as Tauri managed state.
 pub struct Db(pub Mutex<Connection>);

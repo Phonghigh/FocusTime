@@ -30,6 +30,7 @@ impl CategoryTotals {
 #[derive(Debug, Clone, Serialize)]
 pub struct LiveState {
     pub process_name: String,
+    pub domain: Option<String>,
     pub category: Category,
     pub elapsed_seconds: i64,
     pub totals: CategoryTotals,
@@ -41,6 +42,7 @@ struct Inner {
     session_start: i64,
     current_process: String,
     current_category: Category,
+    current_domain: Option<String>,
     event_start: i64,
     totals: CategoryTotals,
 }
@@ -82,6 +84,7 @@ impl SessionEngine {
             session_start: started_at,
             current_process: process_name,
             current_category: category,
+            current_domain: None,
             event_start: started_at,
             totals: CategoryTotals::default(),
         });
@@ -109,6 +112,30 @@ impl SessionEngine {
 
         inner.current_process = process_name.to_string();
         inner.current_category = classifier::classify(conn, inner.profile_id, process_name);
+        inner.current_domain = None;
+        inner.event_start = ts;
+    }
+
+    /// Called whenever the browser extension (via the native-messaging
+    /// bridge) reports the active tab's domain. Only takes effect when the
+    /// currently tracked foreground process is a known browser executable;
+    /// otherwise the update is stale/irrelevant and ignored. Reclassifies
+    /// using `domain_rules` instead of `app_rules`.
+    pub fn on_domain_update(&self, conn: &Connection, domain: &str) {
+        let mut guard = self.inner.lock().unwrap();
+        let Some(inner) = guard.as_mut() else { return };
+        if !classifier::is_browser(&inner.current_process) {
+            return;
+        }
+        if inner.current_domain.as_deref() == Some(domain) {
+            return;
+        }
+
+        let ts = now();
+        Self::close_event(conn, inner, ts);
+
+        inner.current_category = classifier::classify_domain(conn, inner.profile_id, domain);
+        inner.current_domain = Some(domain.to_string());
         inner.event_start = ts;
     }
 
@@ -116,10 +143,11 @@ impl SessionEngine {
         let duration = (ended_at - inner.event_start).max(0);
         let _ = conn.execute(
             "INSERT INTO usage_events (session_id, process_name, domain, category, started_at, ended_at) \
-             VALUES (?1, ?2, NULL, ?3, ?4, ?5)",
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             (
                 inner.session_id,
                 &inner.current_process,
+                &inner.current_domain,
                 inner.current_category,
                 inner.event_start,
                 ended_at,
@@ -155,6 +183,7 @@ impl SessionEngine {
 
         Some(LiveState {
             process_name: inner.current_process.clone(),
+            domain: inner.current_domain.clone(),
             category: inner.current_category,
             elapsed_seconds: (ts - inner.session_start).max(0),
             totals,
