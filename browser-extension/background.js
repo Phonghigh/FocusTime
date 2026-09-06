@@ -11,6 +11,11 @@ function getPort() {
   if (!port) {
     port = chrome.runtime.connectNative(NATIVE_HOST);
     port.onDisconnect.addListener(() => {
+      if (chrome.runtime.lastError) {
+        // Surfaces here on connect failure: bad native-host manifest path,
+        // wrong allowed_origins/extension id, or the host process crashing.
+        console.error("FocusTime native host disconnected:", chrome.runtime.lastError.message);
+      }
       port = null;
     });
   }
@@ -29,7 +34,8 @@ function reportDomain(url) {
 
   try {
     getPort().postMessage({ domain: hostname, timestamp: Date.now() });
-  } catch {
+  } catch (err) {
+    console.error("FocusTime: failed to send domain to native host:", err);
     port = null; // Host process not running yet; will retry on next event.
   }
 }

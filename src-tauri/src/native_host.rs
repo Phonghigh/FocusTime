@@ -33,10 +33,17 @@ pub fn run() {
             Ok(Some(msg)) => {
                 let line = format!("{{\"domain\":{:?}}}\n", msg.domain);
                 if connection.is_none() {
-                    connection = TcpStream::connect(("127.0.0.1", BRIDGE_PORT)).ok();
+                    match TcpStream::connect(("127.0.0.1", BRIDGE_PORT)) {
+                        Ok(stream) => connection = Some(stream),
+                        Err(err) => eprintln!(
+                            "native_host: could not reach FocusTime app on port {BRIDGE_PORT} \
+                             (is it running?): {err}"
+                        ),
+                    }
                 }
                 if let Some(stream) = connection.as_mut() {
-                    if stream.write_all(line.as_bytes()).is_err() {
+                    if let Err(err) = stream.write_all(line.as_bytes()) {
+                        eprintln!("native_host: lost connection to FocusTime app: {err}");
                         connection = None;
                     }
                 }
