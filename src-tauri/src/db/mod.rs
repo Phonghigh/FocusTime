@@ -8,9 +8,8 @@ use std::path::Path;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
-#[allow(unused_imports)]
 pub use category::Category;
-pub use models::Profile;
+pub use models::{AppRule, AppRuleInput, Profile, UsageEvent};
 
 /// Shared, mutex-guarded SQLite connection stored as Tauri managed state.
 pub struct Db(pub Mutex<Connection>);

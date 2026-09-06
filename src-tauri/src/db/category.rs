@@ -8,22 +8,25 @@ pub enum Category {
     Work,
     Entertainment,
     Distraction,
+    Unclassified,
 }
 
 impl Category {
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             Category::Work => "work",
             Category::Entertainment => "entertainment",
             Category::Distraction => "distraction",
+            Category::Unclassified => "unclassified",
         }
     }
 
-    fn from_str(value: &str) -> Option<Self> {
+    pub fn from_str(value: &str) -> Option<Self> {
         match value {
             "work" => Some(Category::Work),
             "entertainment" => Some(Category::Entertainment),
             "distraction" => Some(Category::Distraction),
+            "unclassified" => Some(Category::Unclassified),
             _ => None,
         }
     }

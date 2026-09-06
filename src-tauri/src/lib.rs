@@ -1,7 +1,9 @@
 mod commands;
 mod db;
+mod tracker;
 
 use tauri::Manager;
+use tracker::SessionEngine;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -10,10 +12,18 @@ pub fn run() {
         .setup(|app| {
             let db = db::init_db(app.handle())?;
             app.manage(db);
+            app.manage(SessionEngine::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::profiles::list_profiles
+            commands::profiles::list_profiles,
+            commands::profiles::create_profile,
+            commands::processes::list_running_processes,
+            commands::rules::set_app_rules,
+            commands::rules::get_app_rules,
+            commands::session::start_session,
+            commands::session::stop_session,
+            commands::session::get_session_report,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
