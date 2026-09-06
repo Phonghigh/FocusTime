@@ -1,6 +1,7 @@
 pub mod category;
 pub mod models;
 pub mod schema;
+pub mod seed;
 
 use rusqlite::Connection;
 use std::fs;
@@ -26,6 +27,7 @@ pub fn init_db(app_handle: &AppHandle) -> rusqlite::Result<Db> {
     let db_path = data_dir.join("focustime.db");
     let conn = Connection::open(db_path)?;
     schema::apply_migrations(&conn)?;
+    seed::seed_sample_profile_if_empty(&conn)?;
 
     Ok(Db(Mutex::new(conn)))
 }
