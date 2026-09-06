@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "FocusTime - Windows focus/distraction tracker"
 authors = ["you"]
 edition = "2021"
+default-run = "focustime"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
