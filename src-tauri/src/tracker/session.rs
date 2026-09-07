@@ -123,8 +123,15 @@ impl SessionEngine {
     /// using `domain_rules` instead of `app_rules`.
     pub fn on_domain_update(&self, conn: &Connection, domain: &str) {
         let mut guard = self.inner.lock().unwrap();
-        let Some(inner) = guard.as_mut() else { return };
+        let Some(inner) = guard.as_mut() else {
+            crate::tracker::browser_bridge::log("session: no active session, dropping domain update");
+            return;
+        };
         if !classifier::is_browser(&inner.current_process) {
+            crate::tracker::browser_bridge::log(&format!(
+                "session: current_process {:?} is not a browser, dropping domain {domain:?}",
+                inner.current_process
+            ));
             return;
         }
         if inner.current_domain.as_deref() == Some(domain) {
