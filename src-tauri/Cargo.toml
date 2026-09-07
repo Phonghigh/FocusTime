@@ -16,6 +16,14 @@ name = "focustime_lib"
 # Desktop-only for now (Phase 1); mobile targets would need "staticlib"/"cdylib" back.
 crate-type = ["rlib"]
 
+[features]
+# This feature is used for production builds or when a dev server is not
+# specified, DO NOT REMOVE!! Without it, plain `cargo build` (not run through
+# `tauri dev`/`tauri build`) always points the webview at `devUrl` instead of
+# the bundled `frontendDist`, regardless of --release.
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
