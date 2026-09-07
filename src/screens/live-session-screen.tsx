@@ -44,11 +44,12 @@ export function LiveSessionScreen({ onSessionStopped }: Props) {
       {live ? (
         <>
           <div className="flex items-center justify-between bg-slate-900 rounded px-4 py-3">
-            <span className="text-lg">{live.process_name}</span>
+            <span className="text-lg">{live.domain ?? live.process_name}</span>
             <span className={`px-3 py-1 rounded text-sm font-semibold ${CATEGORY_COLORS[live.category]}`}>
               {live.category}
             </span>
           </div>
+          {live.domain && <p className="text-slate-500 text-sm -mt-4">via {live.process_name}</p>}
           <p className="text-slate-400">Elapsed: {live.elapsed_seconds}s</p>
 
           <section className="flex flex-col gap-2">
